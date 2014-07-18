@@ -1,11 +1,21 @@
 # express-session
 
-[![NPM Version](https://badge.fury.io/js/express-session.svg)](https://badge.fury.io/js/express-session)
-[![Build Status](https://travis-ci.org/expressjs/session.svg?branch=master)](https://travis-ci.org/expressjs/session)
-[![Coverage Status](https://img.shields.io/coveralls/expressjs/session.svg?branch=master)](https://coveralls.io/r/expressjs/session)
+## Changes from upstream
 
-THIS REPOSITORY NEEDS A MAINTAINER.
-If you are interested in maintaining this module, please start contributing by making PRs and solving / discussing unsolved issues.
+Modified by myself to use the newer, better, faster, stronger keygrip + cookies middleware. New usage is as simple as:
+
+```js
+var express = require('express')
+  , keygrip = require('keygrip')
+  , cookies = require('cookies')
+  , expressSession = require('express-session');
+var app = express();
+var keys = keygrip(["s3cr3tk3y1", "s3cr3tk3y2"]);
+app.use(cookies.express(keys));
+app.use(expressSession());
+```
+
+The original documentation is below, slightly modified to remove references to the old secret option, which is no longer required
 
 ## API
 
@@ -15,7 +25,7 @@ var session = require('express-session')
 
 var app = express()
 
-app.use(session({secret: 'keyboard cat'}))
+app.use(session())
 ```
 
 
@@ -29,7 +39,7 @@ Session data is _not_ saved in the cookie itself, just the session ID.
 
   - `name` - cookie name (formerly known as `key`). (default: `'connect.sid'`)
   - `store` - session store instance.
-  - `secret` - session cookie is signed with this secret to prevent tampering.
+  - ~~`secret` - session cookie is signed with this secret to prevent tampering.~~
   - `cookie` - session cookie settings.
     - (default: `{ path: '/', httpOnly: true, secure: false, maxAge: null }`)
   - `genid` - function to call to generate a new session ID. (default: uses `uid2` library)
@@ -49,8 +59,7 @@ Generate a custom session ID for new sessions. Provide a function that returns a
 app.use(session({
   genid: function(req) {
     return genuuid(); // use UUIDs for session IDs
-  },
-  secret: 'keyboard cat'
+  }
 }))
 ```
 
@@ -62,9 +71,7 @@ If `secure` is set, and you access your site over HTTP, the cookie will not be s
 ```js
 var app = express()
 app.set('trust proxy', 1) // trust first proxy
-app.use(session({
-    secret: 'keyboard cat'
-  , cookie: { secure: true }
+app.use(session({cookie: { secure: true }
 }))
 ```
 
@@ -72,9 +79,7 @@ For using secure cookies in production, but allowing for testing in development,
 
 ```js
 var app = express()
-var sess = {
-  secret: 'keyboard cat'
-  cookie: {}
+var sess = { cookie: {}
 }
 
 if (app.get('env') === 'production') {
@@ -96,7 +101,7 @@ which is (generally) serialized as JSON by the store, so nested objects
 are typically fine. For example below is a user-specific view counter:
 
 ```js
-app.use(session({ secret: 'keyboard cat', cookie: { maxAge: 60000 }}))
+app.use(session(cookie: { maxAge: 60000 }}))
 
 app.use(function(req, res, next) {
   var sess = req.session
